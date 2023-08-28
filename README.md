@@ -1,19 +1,14 @@
 # Real-time Data Analysis with AWS Kinesis
 
-## Project Overview
 
-In this lab, we will work with a combination of AWS services to demonstrate real-time data ingestion, analysis, and processing. Specifically, we will be using:
+In this hands-on project, we will work with a combination of AWS services to demonstrate real-time data ingestion, analysis, and processing. Specifically, we will be using:
 
 - **Kinesis Data Streams**: To ingest and manage the streaming data.
 - **Kinesis Data Analytics**: To perform real-time analytics on the streaming data.
 - **Lambda**: To process the data and trigger specific actions.
 - **DynamoDB**: To store and query the results of our analysis.
 
-## Lab Instructions
-
-Follow these steps to complete the lab:
-
-1. **Setting Up the Environment**:
+**Setting Up the Environment**:
    - Access AWS Cloud9 and create a new folder.
    - Upload the Python script `WriteStreamTransactions.py`, the dataset `transactions.csv`, and the `LabKDA.yaml` file.
    - Deploy the CloudFormation stack using the AWS CLI:
