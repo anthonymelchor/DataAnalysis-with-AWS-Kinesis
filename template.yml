@@ -1,0 +1,226 @@
+Description: Create resources for the Kinesis Data Analytics hands-on
+Parameters:
+  pNameStream: 
+    Description: Stream name
+    Type: String
+    Default: StreamTransactions
+  KinesisAppNameInputPrefix:
+    Description:  Identification of the input stream prefix
+    Type: String
+    Default: StreamData
+Resources:
+  MyStream:  
+    Type: AWS::Kinesis::Stream 
+    Properties: 
+        Name: !Ref pNameStream
+        RetentionPeriodHours: 24 
+        ShardCount: 1
+  MyDynamoDBTable: 
+    Type: AWS::DynamoDB::Table
+    Properties: 
+        TableName: TransactionFraud
+        AttributeDefinitions: 
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        KeySchema: 
+        - 
+          AttributeName: "id"
+          KeyType: "HASH"
+        BillingMode : PAY_PER_REQUEST
+  MyFunctionLambda:
+    Type: 'AWS::Lambda::Function'
+    DependsOn: 
+    - MyStream
+    Properties:
+      FunctionName: AnalyticsAlarms
+      Description: Persist fraudulent transactions in DynamoDB
+      Handler: index.lambda_handler
+      Environment:
+        Variables:
+          table: !Ref MyDynamoDBTable
+      MemorySize: 128
+      Runtime: python3.10
+      Timeout: 60
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+            from __future__ import print_function
+
+            from decimal import Decimal
+            import base64
+            import json
+            import boto3
+            import os
+            
+            sns = boto3.client("sns")
+            dynamo = boto3.resource('dynamodb')
+            
+            def lambda_handler(event, context):
+            	
+            	item = None
+            	table = dynamo.Table(os.environ['table'])
+            	
+            	for record in event['records']:
+            		try:
+            			payload = base64.b64decode(record['data'])
+            			data = json.loads(payload)
+            			
+            			table.put_item(
+            				Item = {
+            					'id': data['id'],
+            					'v1': str(data['v1']),
+            					'v2': str(data['v2']),
+            					'v3': str(data['v3']),
+            					'v4': str(data['v4']),
+            					'v5': str(data['v5']),
+            					'class': data['class']
+            				}
+            			)
+            			
+            		except Exception:
+            			return False
+  LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Path: "/"
+        Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:CreateLogGroup
+              Resource:
+              - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*'
+            - Effect: Allow
+              Action:
+              - dynamodb:BatchWriteItem
+              - dynamodb:PutItem
+              Resource:
+              - !GetAtt MyDynamoDBTable.Arn
+  KinesisAnalyticsRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: KinesisAnalyticsRolName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: kinesisanalytics.amazonaws.com
+            Action: "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: polKDAStreamsInput
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kinesis:DescribeStream
+                  - kinesis:GetShardIterator
+                  - kinesis:GetRecords
+                Resource: !GetAtt MyStream.Arn
+        - PolicyName: polKDALambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt MyFunctionLambda.Arn
+                  - !Join 
+                    - ""
+                    - - !GetAtt MyFunctionLambda.Arn
+                      - ":$LATEST"
+  KinesisDataAnalytics:
+    Type: "AWS::KinesisAnalytics::Application"
+    Properties:
+      ApplicationName: AnalyticsTransactions
+      ApplicationDescription: "Application that detects fraudulent transactions"
+      ApplicationCode: !Sub |
+        -- ** Continuous filter based on a condition ** 
+        --          .----------.   .----------.   .----------.              
+        --          |  SOURCE  |   |  INSERT  |   |  DESTIN. |              
+        -- Source-->|  STREAM  |-->| & SELECT |-->|  STREAM  |--> Destination (Lambda)
+        --          |          |   |  (PUMP)  |   |          |              
+        --          '----------'   '----------'   '----------'         
+        
+        CREATE OR REPLACE STREAM STREAM_TRX_FRAUDULENT ( 
+           "id" VARCHAR(40), 
+           "v1" REAL, 
+           "v2" REAL,
+           "v3" REAL,
+           "v4" REAL,
+           "v5" REAL,
+           "class" INTEGER
+        );
+        
+        CREATE OR REPLACE PUMP PUM_TRX_FRAUDULENT AS 
+        INSERT INTO STREAM_TRX_FRAUDULENT
+        SELECT STREAM "id_trx","v1","v2","v3","v4","v5","class" FROM "${KinesisAppNameInputPrefix}_001" WHERE "class" = 1;
+      Inputs:
+        - NamePrefix: !Ref KinesisAppNameInputPrefix
+          InputSchema:
+            RecordColumns:
+            - Name: "id_trx"
+              SqlType: "VARCHAR(100)"
+              Mapping: "$.id_trx"
+            - Name: "v1"
+              SqlType: "DECIMAL"
+              Mapping: "$.v1"
+            - Name: "v2"
+              SqlType: "DECIMAL"
+              Mapping: "$.v2"
+            - Name: "v3"
+              SqlType: "DECIMAL"
+              Mapping: "$.v3"
+            - Name: "v4"
+              SqlType: "DECIMAL"
+              Mapping: "$.v4"
+            - Name: "v5"
+              SqlType: "DECIMAL"
+              Mapping: "$.v5"
+            - Name: "class"
+              SqlType: "INTEGER"
+              Mapping: "$.class"
+            RecordFormat:
+              RecordFormatType: "JSON"
+              MappingParameters:
+                JSONMappingParameters:
+                  RecordRowPath: "$"
+            RecordEncoding: "UTF-8"
+          KinesisStreamsInput:
+            ResourceARN: !GetAtt MyStream.Arn
+            RoleARN: !GetAtt KinesisAnalyticsRole.Arn
+  KinesisDataAnalyticsLambdaOutput:
+    Type: "AWS::KinesisAnalytics::ApplicationOutput"
+    DependsOn: 
+      - KinesisDataAnalytics
+      - MyFunctionLambda
+    Properties:
+      ApplicationName: !Ref KinesisDataAnalytics
+      Output:
+        Name: STREAM_TRX_FRAUDULENT
+        DestinationSchema:
+          RecordFormatType: "JSON"
+        LambdaOutput:
+          ResourceARN: !Join 
+            - ""
+            - - !GetAtt MyFunctionLambda.Arn
+              - ":$LATEST"
+          RoleARN: !GetAtt KinesisAnalyticsRole.Arn
