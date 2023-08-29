@@ -45,6 +45,8 @@ To validate that the process of creating the stack was successful, we can go int
 - Open the Amazon Kinesis service, go to 'Analytics applications,' and select the 'SQL applications' option.
 - Click on the 'AnalyticsTransactions' application that was created and start it by clicking on "Run."
 
+![2-1](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/21dbfa01-9592-466b-815a-6e3804b12fa9)
+
 ## Executing Python file
 
 Now we will proceed to execute the Python file that was downloaded at the time of cloning the repository and that will serve as the data source for our data stream. But first, we will explain a bit about the process that will be performed during the execution. The WriteStreamTransactions.py Python file will read the 'transactions.csv' dataset, also downloaded from the repository, containing approximately 5000 transaction records, out of which 7 are classified as fraudulent transactions. These records will be sent to our Data Stream, where our Data Analytics application comes into play. This application will analyze the Data Stream records in real-time and apply a filter to identify fraudulent transactions. The destination of our Data Analytics application will be a lambda function, created in the stack, which will take the filtered records and add them to a DynamoDB table.
@@ -63,9 +65,18 @@ As we wrapped up the execution, we validated its success by checking the 'Transa
 ![5](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/bb2fb9c4-dc7e-4690-a9a1-c16fa96865fd)
 
 ## Conclusion
-In this hands-on project, we've delved into the exciting realm of real-time data analysis using AWS Kinesis services. Through this project, we've harnessed the power of various AWS components to showcase the end-to-end process of data ingestion, real-time analysis, and meaningful data processing.
-Through this project, we've not only demonstrated the capabilities of AWS services but also showcased the practical application of these tools in real-world scenarios. I hope this hands-on experience has enriched your understanding of real-time data analysis with AWS Kinesis and inspired you to explore further.
+In this hands-on project, we've delved into the exciting realm of real-time data analysis using AWS Kinesis services. 
+
+A quick recap of your journey:
+
+- Get ready for real-time data analysis with Kinesis Data Streams.
+- Immerse yourself in the insights of real-time analytics through Kinesis Data Analytics.
+- Feel the dynamism of data processing and triggered actions using Lambda.
+- Extend your research and analysis using DynamoDB.
+
+Through this project, we've harnessed the power of various AWS components to showcase the end-to-end process of data ingestion, real-time analysis, and meaningful data processing. We've not only demonstrated the capabilities of AWS services but also showcased the practical application of these tools in real-world scenarios. I hope this hands-on experience has enriched your understanding of real-time data analysis with AWS Kinesis and inspired you to explore further.
 Thank you for embarking on this journey of exploration and learning. 
+
 Catch you on the flip side!
 
 
