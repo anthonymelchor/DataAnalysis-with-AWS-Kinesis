@@ -4,6 +4,8 @@ In this project, we will take a journey into the world of real-time data analysi
 
 As we go deeper, you'll learn more about how different parts of AWS work together nicely. Get ready to dive into the details of adding data, quickly understanding data as it comes in, and making data change in special ways.
 
+### Key Highlights:
+
 - **Kinesis Data Streams:** Watch how data comes in and is looked after for streaming data.
 - **Kinesis Data Analytics:** Immerse yourself in real-time analytics that provide instant insights as data streams in.
 - **Lambda:** Experience the dynamism of data processing and triggered actions through Lambda functions.
