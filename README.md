@@ -1,12 +1,13 @@
 # Real-time Data Analysis with AWS Kinesis
 
+In this project, we will take a journey into the world of real-time data analysis using AWS Kinesis services. Our exploration will focus on the simulation of real-time detection for attempted fraudulent banking transactions.
 
-In this hands-on project, we will work with a combination of AWS services to demonstrate real-time data ingestion, analysis, and processing. Specifically, we will be using:
+As we go deeper, you'll learn more about how different parts of AWS work together nicely. Get ready to dive into the details of adding data, quickly understanding data as it comes in, and making data change in special ways.
 
-- **Kinesis Data Streams**: To ingest and manage the streaming data.
-- **Kinesis Data Analytics**: To perform real-time analytics on the streaming data.
-- **Lambda**: To process the data and trigger specific actions.
-- **DynamoDB**: To store and query the results of our analysis.
+- **Kinesis Data Streams:** Watch how data comes in and is looked after for streaming data.
+- **Kinesis Data Analytics:** Immerse yourself in real-time analytics that provide instant insights as data streams in.
+- **Lambda:** Experience the dynamism of data processing and triggered actions through Lambda functions.
+- **DynamoDB:** Extend the value of your analysis by storing and querying results using DynamoDB.
 
 ### Creating Cloud9 Enviroment
 Initially, we will use the AWS Cloud9 service to execute our CloudFormation template.
@@ -19,53 +20,51 @@ Initially, we will use the AWS Cloud9 service to execute our CloudFormation temp
 
 ![2](https://github.com/anthonymelchor/CICD-lambda-serverless/assets/48603061/68e42bd1-0245-4b81-aa01-80b710b1617c)
 
-## Creating Stacks
-1. After the environment has been successfully created, open it up, and from the console, clone the current repository:
+## Creating Stack
+- After the environment has been successfully created, open it up, and from the console, clone the current repository:
 ```
 https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis.git
 ```
-![3](https://github.com/anthonymelchor/CICD-lambda-serverless/assets/48603061/8dca9429-5caa-4ef1-a4f2-6bbd2616c7b0)
+![1](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/42caebed-0687-4bb9-8629-7f038d8f888f)
 
-2.  Navigate to the 'CICD-lambda-serverless' project and then to the 'code_pipeline' folder. Execute the following command to create our first services stack:
+- Navigate to the 'DataAnalysis-with-AWS-Kinesis' project. Execute the following command to create our services stack:
 ```
-sh codepipeline.sh
+aws cloudformation create-stack --stack-name DataAnalysis --template-body file://template.yml --capabilities CAPABILITY_NAMED_IAM
 ```
-![4](https://github.com/anthonymelchor/CICD-lambda-serverless/assets/48603061/5bd9ef76-2711-4bf2-ad23-604b966fc234)
+This will create the necessary resources, including a DynamoDB table, Kinesis Data Streams, a Lambda function, and a Kinesis Data Analytics application.
 
-3. To validate that the process of creating the stack was successful, we can go into the AWS CloudFormation service, where we will visualize the 'codepipeline-transactions' stack and its resources:
+![2](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/1e297c5c-54d3-4d55-a810-a9099e119934)
 
-![5](https://github.com/anthonymelchor/CICD-lambda-serverless/assets/48603061/8e2f282a-06fe-43c7-bebe-d9efaf21db69)
+To validate that the process of creating the stack was successful, we can go into the AWS CloudFormation service, where we will visualize the 'DataAnalysis' stack and its resources.
 
-4. We will follow a similar process to create our second stack:
+![3](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/dfcc5d73-7e74-459c-b92f-cf21409f826e)
+
+## Running the Data Analytics Applicaction
+- Open the Amazon Kinesis service, go to 'Analytics applications,' and select the 'SQL applications' option.
+- Click on the 'AnalyticsTransactions' application that was created and start it by clicking on "Run."
+
+## Executing Python file
+
+Now we will proceed to execute the Python file that was downloaded at the time of cloning the repository and that will serve as the data source for our data stream. But first, we will explain a bit about the process that will be performed during the execution. The WriteStreamTransactions.py Python file will read the 'transactions.csv' dataset, also downloaded from the repository, containing approximately 5000 transaction records, out of which 7 are classified as fraudulent transactions. These records will be sent to our Data Stream, where our Data Analytics application comes into play. This application will analyze the Data Stream records in real-time and apply a filter to identify fraudulent transactions. The destination of our Data Analytics application will be a lambda function, created in the stack, which will take the filtered records and add them to a DynamoDB table.
+To execute the Python file, you should run the following code in cloud formation enviroment:
 
 ```
-sh dynamodb.sh
+pip install boto3
+pip install pandas
+python3 WriteStreamTransactions.py
 ```
-![6](https://github.com/anthonymelchor/CICD-lambda-serverless/assets/48603061/8a354367-c143-4bb8-a61b-9058c074436a)
+![4](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/5f85f0ec-fffe-483c-b659-a0e681bae9ee)
 
-**Setting Up the Environment**:
-   - Access AWS Cloud9 and create a new folder.
-   - Upload the Python script `WriteStreamTransactions.py`, the dataset `transactions.csv`, and the `LabKDA.yaml` file.
-   - Deploy the CloudFormation stack using the AWS CLI:
-     ```
-     aws cloudformation create-stack --stack-name StackLabKDA --template-body file://LabKDA.yaml --capabilities CAPABILITY_NAMED_IAM
-     ```
-   This will create the necessary resources, including a DynamoDB table, Kinesis Data Streams, a Lambda function, and a Kinesis Data Analytics application.
+## Validation
+As we wrapped up the execution, we validated its success by checking the 'TransactionFraud' DynamoDB table. The presence of the expected 7 records, corresponding to fraudulent transactions, provided concrete validation of our real-time data analysis approach.
 
-2. **Running the Lab**:
-   - Open the Kinesis Data Analytics service and start the application by clicking on "Run."
-   - Execute the Python script from Cloud9 to send 5000 transactions to Kinesis Data Streams:
-     ```
-     python3 WriteStreamTransactions.py
-     ```
+![5](https://github.com/anthonymelchor/DataAnalysis-with-AWS-Kinesis/assets/48603061/bb2fb9c4-dc7e-4690-a9a1-c16fa96865fd)
 
-3. **Verification**:
-   - Check the DynamoDB table to verify that it contains 7 records, which correspond to fraudulent transactions.
+## Conclusion
+In this hands-on project, we've delved into the exciting realm of real-time data analysis using AWS Kinesis services. Through this project, we've harnessed the power of various AWS components to showcase the end-to-end process of data ingestion, real-time analysis, and meaningful data processing.
+Through this project, we've not only demonstrated the capabilities of AWS services but also showcased the practical application of these tools in real-world scenarios. I hope this hands-on experience has enriched your understanding of real-time data analysis with AWS Kinesis and inspired you to explore further.
+Thank you for embarking on this journey of exploration and learning. 
+Catch you on the flip side!
 
-4. **Cleanup**:
-   - Once you've finished the lab, remember to delete the CloudFormation stack to avoid unnecessary charges:
-     ```
-     aws cloudformation delete-stack --stack-name StackLabKDA
-     ```
 
-Feel free to reach out if you have any questions or encounter any issues. Happy learning!
+
